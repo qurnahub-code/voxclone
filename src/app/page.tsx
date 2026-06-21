@@ -1,65 +1,164 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef } from 'react';
+import axios from 'axios';
+import { Play, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload } from 'lucide-react';
 
 export default function Home() {
+  const [text, setText] = useState('');
+  const [backendUrl, setBackendUrl] = useState('http://localhost:8000');
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setAudioFile(e.target.files[0]);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!text || !audioFile) return;
+    setLoading(true);
+    setError(null);
+    setAudioUrl(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('text', text);
+      formData.append('audio_file', audioFile);
+
+      // We remove trailing slashes from the backend URL if present
+      const cleanUrl = backendUrl.replace(/\/$/, '');
+      
+      const res = await axios.post(`${cleanUrl}/api/clone`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      if (res.data.status === 'success') {
+        setAudioUrl(`${cleanUrl}/api/audio/${res.data.file}`);
+      } else {
+        setError(res.data.message || 'Generation failed.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Network error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gray-950 flex font-sans">
+      {/* Sidebar */}
+      <div className="w-80 border-r border-gray-800 bg-gray-900/50 p-6 flex flex-col gap-8">
+        <div className="flex items-center gap-3 text-2xl font-bold text-white tracking-wide">
+          <div className="bg-purple-600/20 p-2 rounded-xl">
+            <Mic className="w-6 h-6 text-purple-500" />
+          </div>
+          <span>VoxClone</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        
+        <div className="flex flex-col gap-3">
+          <label className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
+            <LinkIcon className="w-3 h-3" /> Connection
+          </label>
+          <input 
+            type="text"
+            value={backendUrl}
+            onChange={(e) => setBackendUrl(e.target.value)}
+            placeholder="https://your-ngrok-url.app"
+            className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+          />
+          <p className="text-xs text-gray-500">Paste your Google Colab Ngrok URL here.</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
+            <Mic className="w-3 h-3" /> Voice Cloning
+          </label>
+          
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-gray-700 hover:border-purple-500 bg-gray-800/50 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <Upload className="w-6 h-6 text-gray-400" />
+            <span className="text-sm font-medium text-gray-300 text-center">
+              {audioFile ? audioFile.name : "Upload Reference Audio"}
+            </span>
+            <span className="text-xs text-gray-500 text-center">
+              Provide a clear 5-10 second clip of the voice you want to clone. (.wav, .mp3)
+            </span>
+          </div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept="audio/*" 
+            className="hidden" 
+          />
+        </div>
+
+        <div className="mt-auto flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 cursor-pointer">
+          <Settings className="w-4 h-4" />
+          <span>Advanced Options</span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-10 flex flex-col max-w-5xl mx-auto w-full gap-8">
+        <header>
+          <h1 className="text-4xl font-bold text-white tracking-tight">Speech Synthesis</h1>
+          <p className="text-gray-400 mt-2 text-lg">Generate ultra-realistic voice overs using XTTS-v2 Voice Cloning.</p>
+        </header>
+
+        <div className="flex-1 flex flex-col gap-6">
+          <div className="relative flex-1 bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition-all shadow-2xl shadow-black/50">
+            <textarea
+              className="w-full h-full p-8 bg-transparent text-xl text-gray-100 placeholder-gray-600 outline-none resize-none leading-relaxed"
+              placeholder="Type or paste the script you want your cloned voice to read..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="absolute bottom-6 right-6 text-sm text-gray-500 font-medium bg-gray-950/50 px-3 py-1 rounded-full backdrop-blur-sm">
+              {text.length} / 5000 characters
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl text-sm font-medium">
+              Error: {error}
+            </div>
+          )}
+
+          <div className="flex justify-between items-center bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-xl shadow-black/20">
+            <div className="flex-1 px-4">
+              {audioUrl ? (
+                <div className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <audio controls src={audioUrl} className="h-12 w-full max-w-md" autoPlay />
+                  <a href={audioUrl} download className="p-3 text-gray-400 hover:text-white bg-gray-800 rounded-xl transition-all hover:bg-gray-700 hover:scale-105 active:scale-95">
+                    <Download className="w-5 h-5" />
+                  </a>
+                </div>
+              ) : (
+                <span className="text-gray-500 text-sm font-medium">Ready to synthesize...</span>
+              )}
+            </div>
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !text || !audioFile || !backendUrl}
+              className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white px-8 py-4 rounded-xl font-semibold flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/25"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
+              {loading ? 'Synthesizing...' : 'Generate Cloned Voice'}
+            </button>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
