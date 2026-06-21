@@ -105,9 +105,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex font-sans">
+    <div className="min-h-screen bg-gray-950 flex flex-col md:flex-row font-sans">
       {/* Sidebar */}
-      <div className="w-80 border-r border-gray-800 bg-gray-900/50 p-6 flex flex-col gap-8">
+      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-800 bg-gray-900/50 p-6 flex flex-col gap-8 shrink-0">
         <div className="flex items-center gap-3 text-2xl font-bold text-white tracking-wide">
           <div className="bg-purple-600/20 p-2 rounded-xl">
             <Mic className="w-6 h-6 text-purple-500" />
@@ -211,7 +211,7 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-10 flex flex-col max-w-5xl mx-auto w-full gap-8">
+      <div className="flex-1 p-6 md:p-10 flex flex-col max-w-5xl mx-auto w-full gap-6 md:gap-8">
         <header>
           <h1 className="text-4xl font-bold text-white tracking-tight">Speech Synthesis</h1>
           <p className="text-gray-400 mt-2 text-lg">Generate ultra-realistic voice overs using XTTS-v2 Voice Cloning.</p>
@@ -236,11 +236,11 @@ export default function Home() {
             </div>
           )}
 
-          <div className="flex justify-between items-center bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-xl shadow-black/20">
-            <div className="flex-1 px-4">
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-xl shadow-black/20 gap-4">
+            <div className="flex-1 px-2 md:px-4 flex justify-center md:justify-start">
               {audioUrl ? (
-                <div className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <audio controls src={audioUrl} className="h-12 w-full max-w-md" autoPlay />
+                <div className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
+                  <audio controls src={audioUrl} className="h-12 w-full md:max-w-md" autoPlay />
                   <a href={audioUrl} download className="p-3 text-gray-400 hover:text-white bg-gray-800 rounded-xl transition-all hover:bg-gray-700 hover:scale-105 active:scale-95">
                     <Download className="w-5 h-5" />
                   </a>
@@ -252,7 +252,7 @@ export default function Home() {
             <button
               onClick={handleGenerate}
               disabled={loading || !text || !audioFile || !backendUrl}
-              className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white px-8 py-4 rounded-xl font-semibold flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/25"
+              className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white px-8 py-4 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/25 w-full md:w-auto"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
               {loading ? `Synthesizing... (${elapsed}s / ~35s)` : 'Generate Cloned Voice'}
