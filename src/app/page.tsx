@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Play, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload } from 'lucide-react';
+import { Play, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload, Globe } from 'lucide-react';
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -13,6 +13,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
+  const [language, setLanguage] = useState('en');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -78,6 +79,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append('text', text);
+      formData.append('language', language);
       formData.append('audio_file', audioFile);
 
       // We remove trailing slashes from the backend URL if present
@@ -170,6 +172,36 @@ export default function Home() {
             accept="audio/*" 
             className="hidden" 
           />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
+            <Globe className="w-3 h-3" /> Language
+          </label>
+          <select 
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all appearance-none cursor-pointer"
+          >
+            <option value="en">English</option>
+            <option value="ur">Urdu</option>
+            <option value="hi">Hindi</option>
+            <option value="ar">Arabic</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="pl">Polish</option>
+            <option value="tr">Turkish</option>
+            <option value="ru">Russian</option>
+            <option value="nl">Dutch</option>
+            <option value="cs">Czech</option>
+            <option value="zh-cn">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="hu">Hungarian</option>
+          </select>
         </div>
 
         <div className="mt-auto flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 cursor-pointer">
