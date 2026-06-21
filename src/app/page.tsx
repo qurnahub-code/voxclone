@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Play, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload, Globe } from 'lucide-react';
+import { Play, Pause, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload, Globe, Music } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -18,6 +19,19 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -110,6 +124,13 @@ export default function Home() {
       
       if (res.data.status === 'success') {
         setAudioUrl(`${cleanUrl}/api/audio/${res.data.file}`);
+        setIsPlaying(false);
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#a855f7', '#d946ef', '#3b82f6']
+        });
       } else {
         setError(res.data.message || 'Generation failed.');
       }
@@ -122,9 +143,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col md:flex-row font-sans">
+    <div className="h-screen overflow-hidden bg-gray-950 flex flex-col md:flex-row font-sans">
       {/* Sidebar */}
-      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-800 bg-gray-900/50 p-6 flex flex-col gap-8 shrink-0">
+      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-800 bg-gray-900/50 p-6 flex flex-col gap-8 shrink-0 overflow-y-auto">
         <div className="flex items-center gap-3 text-2xl font-bold text-white tracking-wide">
           <div className="bg-purple-600/20 p-2 rounded-xl">
             <Mic className="w-6 h-6 text-purple-500" />
@@ -248,7 +269,7 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 md:p-10 flex flex-col max-w-5xl mx-auto w-full gap-6 md:gap-8">
+      <div className="flex-1 p-6 md:p-10 flex flex-col max-w-5xl mx-auto w-full gap-6 md:gap-8 overflow-y-auto">
         <header>
           <h1 className="text-4xl font-bold text-white tracking-tight">Speech Synthesis</h1>
           <p className="text-gray-400 mt-2 text-lg">Generate ultra-realistic voice overs using XTTS-v2 Voice Cloning.</p>
@@ -276,10 +297,33 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-xl shadow-black/20 gap-4">
             <div className="flex-1 px-2 md:px-4 flex justify-center md:justify-start">
               {audioUrl ? (
-                <div className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
-                  <audio controls src={audioUrl} className="h-12 w-full md:max-w-md" autoPlay />
-                  <a href={audioUrl} download className="p-3 text-gray-400 hover:text-white bg-gray-800 rounded-xl transition-all hover:bg-gray-700 hover:scale-105 active:scale-95">
-                    <Download className="w-5 h-5" />
+                <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-500 w-full bg-gray-800/50 p-2 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
+                  <audio 
+                    ref={audioRef} 
+                    src={audioUrl} 
+                    onEnded={() => setIsPlaying(false)}
+                    className="hidden" 
+                  />
+                  <button 
+                    onClick={togglePlay}
+                    className="w-12 h-12 flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:scale-105 active:scale-95 shrink-0"
+                  >
+                    {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-1" />}
+                  </button>
+                  
+                  <div className="flex-1 flex flex-col">
+                    <span className="text-sm font-bold text-gray-200 flex items-center gap-2">
+                      <Music className="w-4 h-4 text-purple-400" /> Audio Generated!
+                    </span>
+                    <span className="text-xs text-gray-400">Ready to play</span>
+                  </div>
+
+                  <a 
+                    href={audioUrl} 
+                    download 
+                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white bg-gray-700/50 hover:bg-gray-600 rounded-xl transition-all hover:scale-105 active:scale-95 shrink-0 mr-1"
+                  >
+                    <Download className="w-4 h-4" />
                   </a>
                 </div>
               ) : (
