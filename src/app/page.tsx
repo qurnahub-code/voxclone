@@ -6,13 +6,51 @@ import { Play, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload } from
 
 export default function Home() {
   const [text, setText] = useState('');
-  const [backendUrl, setBackendUrl] = useState('http://localhost:8000');
+  const [backendUrl, setBackendUrl] = useState('https://abusufyan909-voxclone-api.hf.space');
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([audioBlob], "recorded_voice.webm", { type: 'audio/webm' });
+        setAudioFile(file);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone. Please allow microphone permissions in your browser.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -106,6 +144,25 @@ export default function Home() {
               Provide a clear 5-10 second clip of the voice you want to clone. (.wav, .mp3)
             </span>
           </div>
+
+          <div className="flex items-center gap-4">
+            <div className="h-px bg-gray-800 flex-1"></div>
+            <span className="text-xs text-gray-500 font-medium uppercase">OR</span>
+            <div className="h-px bg-gray-800 flex-1"></div>
+          </div>
+
+          <button 
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+              isRecording 
+              ? "bg-red-500/20 text-red-500 hover:bg-red-500/30 border border-red-500/50 animate-pulse" 
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700"
+            }`}
+          >
+            {isRecording ? <div className="w-2 h-2 bg-red-500 rounded-full" /> : <Mic className="w-4 h-4" />}
+            {isRecording ? "Stop Recording..." : "Record Voice with Mic"}
+          </button>
+
           <input 
             type="file" 
             ref={fileInputRef} 
