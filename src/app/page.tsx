@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Play, Pause, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload, Globe, Music } from 'lucide-react';
+import { Play, Pause, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload, Globe, Music, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const PRESET_VOICES = [
@@ -34,6 +34,10 @@ export default function Home() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  const [showSettings, setShowSettings] = useState(false);
+  const [temperature, setTemperature] = useState(0.75);
+  const [repetitionPenalty, setRepetitionPenalty] = useState(5.0);
 
   const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -139,6 +143,8 @@ export default function Home() {
       formData.append('text', text);
       formData.append('language', language);
       formData.append('audio_file', audioFile);
+      formData.append('temperature', temperature.toString());
+      formData.append('repetition_penalty', repetitionPenalty.toString());
 
       // We remove trailing slashes from the backend URL if present
       const cleanUrl = backendUrl.replace(/\/$/, '');
@@ -170,7 +176,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-950 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-gray-950 flex flex-col md:flex-row font-sans relative">
       {/* Sidebar */}
       <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-800 bg-gray-900/50 p-6 flex flex-col gap-8 shrink-0 overflow-y-auto">
         <div className="flex items-center gap-3 text-2xl font-bold text-white tracking-wide">
@@ -286,7 +292,10 @@ export default function Home() {
           </select>
         </div>
 
-        <div className="mt-auto flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 cursor-pointer">
+        <div 
+          onClick={() => setShowSettings(true)}
+          className="mt-auto flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 cursor-pointer transition-colors"
+        >
           <Settings className="w-4 h-4" />
           <span>Advanced Options</span>
         </div>
@@ -365,6 +374,68 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowSettings(false)}
+              className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-2xl font-bold text-white mb-2">Advanced Options</h2>
+            <p className="text-sm text-gray-400 mb-8">Fine-tune the AI voice generation parameters for precise control.</p>
+            
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-semibold text-gray-300">Temperature: {temperature}</label>
+                  <span className="text-xs text-gray-500">Default: 0.75</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0.1" 
+                  max="2.0" 
+                  step="0.05"
+                  value={temperature}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  className="w-full accent-purple-500 h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Controls the expressiveness of the voice. Higher values make it more dynamic and emotional, but too high can cause instability.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-semibold text-gray-300">Repetition Penalty: {repetitionPenalty}</label>
+                  <span className="text-xs text-gray-500">Default: 5.0</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1.0" 
+                  max="10.0" 
+                  step="0.5"
+                  value={repetitionPenalty}
+                  onChange={(e) => setRepetitionPenalty(parseFloat(e.target.value))}
+                  className="w-full accent-purple-500 h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Prevents the AI from repeating words or getting stuck in loops. Higher values enforce stricter penalties.
+                </p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowSettings(false)}
+              className="w-full mt-8 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
