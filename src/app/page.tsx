@@ -205,6 +205,9 @@ export default function Home() {
             <option value="/voices/christopher.mp3">Christopher (US Male)</option>
             <option value="/voices/sonia.mp3">Sonia (UK Female)</option>
             <option value="/voices/william.mp3">William (AU Male)</option>
+            <option value="/voices/asad.mp3">Asad (Urdu Male)</option>
+            <option value="/voices/salma.mp3">Salma (Arabic Female)</option>
+            <option value="/voices/yunxi.mp3">Yunxi (Chinese Male)</option>
           </select>
         </div>
 
