@@ -5,6 +5,19 @@ import axios from 'axios';
 import { Play, Pause, Loader2, Download, Mic, Settings, Link as LinkIcon, Upload, Globe, Music } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+const PRESET_VOICES = [
+  { id: '/voices/christopher.mp3', name: 'Christopher (US Male)', lang: 'en' },
+  { id: '/voices/sonia.mp3', name: 'Sonia (UK Female)', lang: 'en' },
+  { id: '/voices/william.mp3', name: 'William (AU Male)', lang: 'en' },
+  { id: '/voices/asad.mp3', name: 'Asad (Urdu Male)', lang: 'ur' },
+  { id: '/voices/salma.mp3', name: 'Salma (Arabic Female)', lang: 'ar' },
+  { id: '/voices/yunxi.mp3', name: 'Yunxi (Chinese Male)', lang: 'zh-cn' },
+  { id: '/voices/alvaro.mp3', name: 'Álvaro (Spanish Male)', lang: 'es' },
+  { id: '/voices/henri.mp3', name: 'Henri (French Male)', lang: 'fr' },
+  { id: '/voices/madhur.mp3', name: 'Madhur (Hindi Male)', lang: 'hi' },
+  { id: '/voices/conrad.mp3', name: 'Conrad (German Male)', lang: 'de' },
+];
+
 export default function Home() {
   const [text, setText] = useState('');
   const [backendUrl, setBackendUrl] = useState('https://abusufyan909-voxclone-api.hf.space');
@@ -21,6 +34,20 @@ export default function Home() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setPresetVoice(val);
+    const preset = PRESET_VOICES.find(p => p.id === val);
+    if (preset) {
+      setLanguage(preset.lang);
+    }
+  };
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLanguage(e.target.value);
+    setPresetVoice('');
+  };
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -219,16 +246,13 @@ export default function Home() {
 
           <select 
             value={presetVoice}
-            onChange={(e) => setPresetVoice(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm text-gray-300 focus:ring-2 focus:ring-purple-500 outline-none transition-all appearance-none cursor-pointer"
+            onChange={handlePresetChange}
+            className={`bg-gray-800 border ${presetVoice ? 'border-gray-700' : 'border-purple-500/50'} rounded-xl p-3 text-sm text-gray-300 focus:ring-2 focus:ring-purple-500 outline-none transition-all appearance-none cursor-pointer`}
           >
-            <option value="">Select a preset voice...</option>
-            <option value="/voices/christopher.mp3">Christopher (US Male)</option>
-            <option value="/voices/sonia.mp3">Sonia (UK Female)</option>
-            <option value="/voices/william.mp3">William (AU Male)</option>
-            <option value="/voices/asad.mp3">Asad (Urdu Male)</option>
-            <option value="/voices/salma.mp3">Salma (Arabic Female)</option>
-            <option value="/voices/yunxi.mp3">Yunxi (Chinese Male)</option>
+            <option value="">Select a speaker...</option>
+            {PRESET_VOICES.map(preset => (
+              <option key={preset.id} value={preset.id}>{preset.name}</option>
+            ))}
           </select>
         </div>
 
@@ -238,7 +262,7 @@ export default function Home() {
           </label>
           <select 
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={handleLanguageChange}
             className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all appearance-none cursor-pointer"
           >
             <option value="en">English</option>
