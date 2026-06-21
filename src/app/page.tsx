@@ -14,6 +14,7 @@ export default function Home() {
   const [elapsed, setElapsed] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [language, setLanguage] = useState('en');
+  const [presetVoice, setPresetVoice] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -52,6 +53,22 @@ export default function Home() {
       setIsRecording(false);
     }
   };
+
+  useEffect(() => {
+    if (!presetVoice) return;
+    const loadPreset = async () => {
+      try {
+        const res = await fetch(presetVoice);
+        const blob = await res.blob();
+        const filename = presetVoice.split('/').pop() || 'preset.mp3';
+        const file = new File([blob], filename, { type: blob.type });
+        setAudioFile(file);
+      } catch (err) {
+        console.error("Failed to load preset voice", err);
+      }
+    };
+    loadPreset();
+  }, [presetVoice]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -172,6 +189,23 @@ export default function Home() {
             accept="audio/*" 
             className="hidden" 
           />
+
+          <div className="flex items-center gap-4 mt-2">
+            <div className="h-px bg-gray-800 flex-1"></div>
+            <span className="text-xs text-gray-500 font-medium uppercase">OR PRESET</span>
+            <div className="h-px bg-gray-800 flex-1"></div>
+          </div>
+
+          <select 
+            value={presetVoice}
+            onChange={(e) => setPresetVoice(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm text-gray-300 focus:ring-2 focus:ring-purple-500 outline-none transition-all appearance-none cursor-pointer"
+          >
+            <option value="">Select a preset voice...</option>
+            <option value="/voices/christopher.mp3">Christopher (US Male)</option>
+            <option value="/voices/sonia.mp3">Sonia (UK Female)</option>
+            <option value="/voices/william.mp3">William (AU Male)</option>
+          </select>
         </div>
 
         <div className="flex flex-col gap-3">
